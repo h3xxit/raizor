@@ -211,63 +211,74 @@ class RepoMap:
         if not lang:
             return
 
-        try:
-            language = get_language(lang)
-            parser = get_parser(lang)
-        except Exception as err:
-            print(f"Skipping file {fname}: {err}")
+        language, parser = self._initialize_parser(lang, fname)
+        if not language or not parser:
             return
 
-        query_scm = get_scm_fname(lang)
-        if not query_scm.exists():
+        query_scm = self._get_query_scm(lang)
+        if not query_scm:
             return
-        query_scm = query_scm.read_text()
 
         code = self.io.read_text(fname)
         if not code:
             return
         tree = parser.parse(bytes(code, "utf-8"))
 
-        # Run the tags queries
-        query = language.query(query_scm)
-        captures = query.captures(tree.root_node)
-
-        captures = list(captures)
+        captures = self._run_query(language, query_scm, tree)
 
         saw = set()
         for node, tag in captures:
-            if tag.startswith("name.definition."):
-                kind = "def"
-            elif tag.startswith("name.reference."):
-                kind = "ref"
-            else:
+            kind = self._determine_kind(tag)
+            if not kind:
                 continue
 
             saw.add(kind)
+            yield self._create_tag(rel_fname, fname, node, kind)
 
-            result = Tag(
-                rel_fname=rel_fname,
-                fname=fname,
-                name=node.text.decode("utf-8"),
-                kind=kind,
-                line=node.start_point[0],
-            )
-
-            yield result
-
-        if "ref" in saw:
-            return
-        if "def" not in saw:
+        if "ref" in saw or "def" not in saw:
             return
 
-        # We saw defs, without any refs
-        # Some tags files only provide defs (cpp, for example)
-        # Use pygments to backfill refs
+        self._backfill_references_with_pygments(fname, rel_fname, code)
 
+    def _initialize_parser(self, lang, fname):
+        try:
+            language = get_language(lang)
+            parser = get_parser(lang)
+            return language, parser
+        except Exception as err:
+            print(f"Skipping file {fname}: {err}")
+            return None, None
+
+    def _get_query_scm(self, lang):
+        query_scm = get_scm_fname(lang)
+        if not query_scm.exists():
+            return None
+        return query_scm.read_text()
+
+    def _run_query(self, language, query_scm, tree):
+        query = language.query(query_scm)
+        return list(query.captures(tree.root_node))
+
+    def _determine_kind(self, tag):
+        if tag.startswith("name.definition."):
+            return "def"
+        elif tag.startswith("name.reference."):
+            return "ref"
+        return None
+
+    def _create_tag(self, rel_fname, fname, node, kind):
+        return Tag(
+            rel_fname=rel_fname,
+            fname=fname,
+            name=node.text.decode("utf-8"),
+            kind=kind,
+            line=node.start_point[0],
+        )
+
+    def _backfill_references_with_pygments(self, fname, rel_fname, code):
         try:
             lexer = guess_lexer_for_filename(fname, code)
-        except Exception:  # On Windows, bad ref to time.clock which is deprecated?
-            # self.io.tool_error(f"Error lexing {fname}")
+        except Exception:
             return
 
         tokens = list(lexer.get_tokens(code))
