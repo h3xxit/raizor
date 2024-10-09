@@ -17,6 +17,7 @@ from pygments.token import Token
 from tqdm import tqdm
 
 from aider.dump import dump
+from aider.rag_handler import rag_index_codebase
 from aider.special import filter_important_files
 from aider.utils import Spinner
 
@@ -313,6 +314,7 @@ class RepoMap:
         # https://networkx.org/documentation/stable/_modules/networkx/algorithms/link_analysis/pagerank_alg.html#pagerank
         personalize = 100 / len(fnames)
 
+        rag_index_codebase(self.TAGS_CACHE_DIR, fnames)
         if len(fnames) - len(self.TAGS_CACHE) > 100:
             self.io.tool_output(
                 "Initial repo scan can be slow in larger repos, but only happens once."

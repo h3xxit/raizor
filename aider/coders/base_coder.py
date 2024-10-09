@@ -18,6 +18,8 @@ from datetime import datetime
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
+from sympy import false
+
 from aider import __version__, models, prompts, urls, utils
 from aider.commands import Commands
 from aider.history import ChatSummary
@@ -32,6 +34,7 @@ from aider.utils import format_content, format_messages, format_tokens, is_image
 
 from ..dump import dump  # noqa: F401
 from .chat_chunks import ChatChunks
+from ..rag_handler import handle_rag_request
 
 
 class MissingAPIKeyError(ValueError):
@@ -763,10 +766,17 @@ class Coder:
     def run_one(self, user_message, preproc):
         self.init_before_message()
 
+        is_command = False
+        if self.commands.is_command(user_message):
+            is_command = True
+
         if preproc:
             message = self.preproc_user_input(user_message)
         else:
             message = user_message
+
+        if not is_command:
+            message = message + "\n\n\nPossible relevant context:\n\n" + handle_rag_request(RepoMap.TAGS_CACHE_DIR, message)
 
         while message:
             self.reflected_message = None
@@ -781,6 +791,7 @@ class Coder:
 
             self.num_reflections += 1
             message = self.reflected_message
+
 
     def check_for_urls(self, inp):
         url_pattern = re.compile(r"(https?://[^\s/$.?#].[^\s]*[^\s,.])")
