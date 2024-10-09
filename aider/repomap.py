@@ -314,7 +314,16 @@ class RepoMap:
         # https://networkx.org/documentation/stable/_modules/networkx/algorithms/link_analysis/pagerank_alg.html#pagerank
         personalize = 100 / len(fnames)
 
-        rag_index_codebase(self.TAGS_CACHE_DIR, fnames)
+        code_files = set()
+        for fname in fnames:
+            lang = filename_to_lang(fname)
+            if not lang:
+                continue
+            language, parser = self._initialize_parser(lang, fname)
+            if not language or not parser:
+                continue
+            code_files.add(fname)
+        rag_index_codebase(self.TAGS_CACHE_DIR, code_files)
         if len(fnames) - len(self.TAGS_CACHE) > 100:
             self.io.tool_output(
                 "Initial repo scan can be slow in larger repos, but only happens once."

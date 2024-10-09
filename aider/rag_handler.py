@@ -38,7 +38,7 @@ def handle_rag_request(cache_dir: str, user_message) -> str:
     if vectorstore is not None:
         retriever = vectorstore.as_retriever()
 
-        answer = _format_docs(retriever.invoke("user_message"))
+        answer = _format_docs(retriever.invoke(user_message))
 
         print("RAG results: \n" + answer)
         return answer
@@ -115,10 +115,14 @@ def rag_index_codebase(cache_dir: str, paths: set):
 
     spinner.step()
     if len(documents_to_update[0]) > 0:
+        print(len(documents_to_update))
         vectorstore.update_documents(documents_to_update[0], documents_to_update[1])
 
     spinner.step()
     if len(documents_to_add) > 0:
-        vectorstore.add_documents(documents_to_add)
-
+        print(len(documents_to_add))
+        batch_size = 5000
+        batches = [documents_to_add[i:i+batch_size] for i in range(0, len(documents_to_add), batch_size)]
+        for batch in batches:
+            vectorstore.add_documents(batch)
     spinner.end()
