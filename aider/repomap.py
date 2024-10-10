@@ -677,6 +677,15 @@ class RepoMap:
 
 
 def find_src_files(directory):
+    """
+    Recursively find all source files in a given directory.
+    
+    Args:
+        directory (str): The directory to search for source files.
+        
+    Returns:
+        list: A list of file paths for all source files found.
+    """
     if not os.path.isdir(directory):
         return [directory]
 
@@ -688,6 +697,12 @@ def find_src_files(directory):
 
 
 def get_random_color():
+    """
+    Generate a random color in hexadecimal format.
+    
+    Returns:
+        str: A string representing a random color in the format '#RRGGBB'.
+    """
     hue = random.random()
     r, g, b = [int(x * 255) for x in colorsys.hsv_to_rgb(hue, 1, 0.75)]
     res = f"#{r:02x}{g:02x}{b:02x}"
@@ -695,6 +710,15 @@ def get_random_color():
 
 
 def get_scm_fname(lang):
+    """
+    Get the filename for the SCM query file for a given language.
+    
+    Args:
+        lang (str): The programming language.
+        
+    Returns:
+        Path or None: The path to the SCM query file if it exists, otherwise None.
+    """
     # Load the tags queries
     try:
         return resources.files(__package__).joinpath("queries", f"tree-sitter-{lang}-tags.scm")
@@ -703,6 +727,12 @@ def get_scm_fname(lang):
 
 
 def get_supported_languages_md():
+    """
+    Generate a markdown table of supported languages and their features.
+    
+    Returns:
+        str: A markdown formatted string listing languages, file extensions, and support status.
+    """
     from grep_ast.parsers import PARSERS
 
     res = """
