@@ -766,17 +766,10 @@ class Coder:
     def run_one(self, user_message, preproc):
         self.init_before_message()
 
-        is_command = False
-        if self.commands.is_command(user_message):
-            is_command = True
-
         if preproc:
             message = self.preproc_user_input(user_message)
         else:
             message = user_message
-
-        if not is_command:
-            message = message + "\n\n\nPossible relevant context:\n\n" + handle_rag_request(RepoMap.TAGS_CACHE_DIR, message)
 
         while message:
             self.reflected_message = None
