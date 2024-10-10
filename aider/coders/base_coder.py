@@ -638,7 +638,18 @@ class Coder:
             ]
         return repo_messages
 
-    def get_readonly_files_messages(self):
+    def get_rag(self):
+        rag_messages = []
+        rag_content = handle_rag_request()
+        if rag_content:
+            rag_messages += [
+                dict(role="user", content=rag_content),
+                dict(
+                    role="assistant",
+                    content="Ok, I have processed the RAG request.",
+                ),
+            ]
+        return rag_messages
         readonly_messages = []
         read_only_content = self.get_read_only_files_content()
         if read_only_content:
@@ -996,6 +1007,7 @@ class Coder:
         chunks.done = self.done_messages
 
         chunks.repo = self.get_repo_messages()
+        chunks.rag = self.get_rag()
         chunks.readonly_files = self.get_readonly_files_messages()
         chunks.chat_files = self.get_chat_files_messages()
 
