@@ -50,7 +50,6 @@ def _format_docs(docs):
 def rag_index_codebase(cache_dir: str, paths: set):
     spinner = Spinner("Indexing RAG vector db")
 
-    valid_paths = []
     docs = []
     for path in paths:
         spinner.step()
@@ -68,7 +67,6 @@ def rag_index_codebase(cache_dir: str, paths: set):
             except UnicodeDecodeError as e:
                 print(f"Skipping {path}, because of error {e}")
                 pass
-            valid_paths.append(path)
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
@@ -82,7 +80,7 @@ def rag_index_codebase(cache_dir: str, paths: set):
             path_ids[doc.id] += 1
         doc.id = f"{doc.id}-{str(path_ids[doc.id]).zfill(3)}"
 
-    print(f"\nFound {len(valid_paths)}/{len(paths)} valid files, split into {len(splits)} chunks\n")
+    print(f"\nFound {len(docs)}/{len(paths)} valid files, split into {len(splits)} chunks\n")
 
     persistent_client = chromadb.PersistentClient(
         path=cache_dir,
