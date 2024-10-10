@@ -103,6 +103,13 @@ class RepoMap:
         return est_tokens
 
     def get_repo_map(
+        self,
+        chat_files,
+        other_files,
+        mentioned_fnames=None,
+        mentioned_idents=None,
+        force_refresh=False,
+    ):
         """
         Generate a repository map based on the provided files and parameters.
 
@@ -116,13 +123,6 @@ class RepoMap:
         Returns:
             str: A string representation of the repository map.
         """
-        self,
-        chat_files,
-        other_files,
-        mentioned_fnames=None,
-        mentioned_idents=None,
-        force_refresh=False,
-    ):
         if self.max_map_tokens <= 0:
             return
         if not other_files:
@@ -424,6 +424,8 @@ class RepoMap:
             )
 
     def get_ranked_tags(
+        self, chat_fnames, other_fnames, mentioned_fnames, mentioned_idents, progress=None
+    ):
         """
         Rank tags based on their importance and relationships.
 
@@ -437,8 +439,6 @@ class RepoMap:
         Returns:
             list: A list of ranked tags.
         """
-        self, chat_fnames, other_fnames, mentioned_fnames, mentioned_idents, progress=None
-    ):
         import networkx as nx
 
         defines = defaultdict(set)
@@ -612,6 +612,14 @@ class RepoMap:
         return ranked_tags
 
     def get_ranked_tags_map(
+        self,
+        chat_fnames,
+        other_fnames=None,
+        max_map_tokens=None,
+        mentioned_fnames=None,
+        mentioned_idents=None,
+        force_refresh=False,
+    ):
         """
         Generate a ranked map of tags for the repository.
 
@@ -626,14 +634,6 @@ class RepoMap:
         Returns:
             str: A string representation of the ranked tags map.
         """
-        self,
-        chat_fnames,
-        other_fnames=None,
-        max_map_tokens=None,
-        mentioned_fnames=None,
-        mentioned_idents=None,
-        force_refresh=False,
-    ):
         # Create a cache key
         cache_key = [
             tuple(sorted(chat_fnames)) if chat_fnames else None,
@@ -679,6 +679,13 @@ class RepoMap:
         return result
 
     def get_ranked_tags_map_uncached(
+        self,
+        chat_fnames,
+        other_fnames=None,
+        max_map_tokens=None,
+        mentioned_fnames=None,
+        mentioned_idents=None,
+    ):
         """
         Generate a ranked map of tags without using the cache.
 
@@ -692,13 +699,6 @@ class RepoMap:
         Returns:
             str: A string representation of the ranked tags map.
         """
-        self,
-        chat_fnames,
-        other_fnames=None,
-        max_map_tokens=None,
-        mentioned_fnames=None,
-        mentioned_idents=None,
-    ):
         if not other_fnames:
             other_fnames = list()
         if not max_map_tokens:
@@ -876,15 +876,6 @@ def find_src_files(directory):
     Returns:
         list: A list of file paths for all source files found.
     """
-    """
-    Recursively find all source files in a given directory.
-    
-    Args:
-        directory (str): The directory to search for source files.
-        
-    Returns:
-        list: A list of file paths for all source files found.
-    """
     if not os.path.isdir(directory):
         return [directory]
 
@@ -899,12 +890,6 @@ def get_random_color():
     """
     Generate a random color in hexadecimal format.
 
-    Returns:
-        str: A string representing a random color in the format '#RRGGBB'.
-    """
-    """
-    Generate a random color in hexadecimal format.
-    
     Returns:
         str: A string representing a random color in the format '#RRGGBB'.
     """
@@ -924,15 +909,6 @@ def get_scm_fname(lang):
     Returns:
         Path or None: The path to the SCM query file if it exists, otherwise None.
     """
-    """
-    Get the filename for the SCM query file for a given language.
-    
-    Args:
-        lang (str): The programming language.
-        
-    Returns:
-        Path or None: The path to the SCM query file if it exists, otherwise None.
-    """
     # Load the tags queries
     try:
         return resources.files(__package__).joinpath("queries", f"tree-sitter-{lang}-tags.scm")
@@ -944,12 +920,6 @@ def get_supported_languages_md():
     """
     Generate a markdown table of supported languages and their features.
 
-    Returns:
-        str: A markdown formatted string listing languages, file extensions, and support status.
-    """
-    """
-    Generate a markdown table of supported languages and their features.
-    
     Returns:
         str: A markdown formatted string listing languages, file extensions, and support status.
     """

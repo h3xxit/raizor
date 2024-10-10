@@ -640,16 +640,21 @@ class Coder:
 
     def get_rag(self):
         rag_messages = []
-        rag_content = handle_rag_request()
+        if not "/rag" in self.cur_messages[-1]["content"]:
+            return []
+        self.cur_messages[-1]["content"] = self.cur_messages[-1]["content"].replace("/rag ", "")
+        rag_content = handle_rag_request(RepoMap.TAGS_CACHE_DIR, self.cur_messages[-1]["content"])
         if rag_content:
             rag_messages += [
                 dict(role="user", content=rag_content),
                 dict(
                     role="assistant",
-                    content="Ok, I have processed the RAG request.",
+                    content="Ok, this code might be related to the request.",
                 ),
             ]
         return rag_messages
+
+    def get_readonly_files_messages(self):
         readonly_messages = []
         read_only_content = self.get_read_only_files_content()
         if read_only_content:
