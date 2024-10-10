@@ -21,6 +21,7 @@ from aider.utils import ChdirTemporaryDirectory, GitTemporaryDirectory, make_rep
 
 class TestCommands(TestCase):
     def setUp(self):
+        """Set up a temporary directory and change the current working directory to it."""
         self.original_cwd = os.getcwd()
         self.tempdir = tempfile.mkdtemp()
         os.chdir(self.tempdir)
@@ -28,10 +29,12 @@ class TestCommands(TestCase):
         self.GPT35 = Model("gpt-3.5-turbo")
 
     def tearDown(self):
+        """Revert to the original working directory and remove the temporary directory."""
         os.chdir(self.original_cwd)
         shutil.rmtree(self.tempdir, ignore_errors=True)
 
     def test_cmd_add(self):
+        """Test the cmd_add method to ensure it creates specified files."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -47,6 +50,7 @@ class TestCommands(TestCase):
         self.assertTrue(os.path.exists("bar.txt"))
 
     def test_cmd_copy(self):
+        """Test the cmd_copy method to ensure it copies the last assistant message to the clipboard."""
         # Initialize InputOutput and Coder instances
         io = InputOutput(pretty=False, yes=True)
         coder = Coder.create(self.GPT35, None, io)
@@ -77,6 +81,7 @@ class TestCommands(TestCase):
             mock_tool_output.assert_any_call(expected_preview)
 
     def test_cmd_copy_with_cur_messages(self):
+        """Test the cmd_copy method to ensure it handles current messages correctly."""
         # Initialize InputOutput and Coder instances
         io = InputOutput(pretty=False, yes=True)
         coder = Coder.create(self.GPT35, None, io)
@@ -124,6 +129,7 @@ class TestCommands(TestCase):
             mock_tool_error.assert_called_once_with("No assistant messages found to copy.")
 
     def test_cmd_copy_pyperclip_exception(self):
+        """Test the cmd_copy method to ensure it handles exceptions from pyperclip."""
         io = InputOutput(pretty=False, yes=True)
         coder = Coder.create(self.GPT35, None, io)
         commands = Commands(io, coder)
@@ -145,6 +151,7 @@ class TestCommands(TestCase):
             mock_tool_error.assert_called_once_with("Failed to copy to clipboard: Clipboard error")
 
     def test_cmd_add_bad_glob(self):
+        """Test the cmd_add method with a bad glob pattern."""
         # https://github.com/Aider-AI/aider/issues/293
 
         io = InputOutput(pretty=False, yes=False)
@@ -156,6 +163,7 @@ class TestCommands(TestCase):
         commands.cmd_add("**.txt")
 
     def test_cmd_add_with_glob_patterns(self):
+        """Test the cmd_add method with glob patterns to ensure correct file addition."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -182,6 +190,7 @@ class TestCommands(TestCase):
         self.assertNotIn(str(Path("test.txt").resolve()), coder.abs_fnames)
 
     def test_cmd_add_no_match(self):
+        """Test the cmd_add method with a pattern that matches no files."""
         # yes=False means we will *not* create the file when it is not found
         io = InputOutput(pretty=False, yes=False)
         from aider.coders import Coder
@@ -196,6 +205,7 @@ class TestCommands(TestCase):
         self.assertEqual(len(coder.abs_fnames), 0)
 
     def test_cmd_add_no_match_but_make_it(self):
+        """Test the cmd_add method with a pattern that matches no files but creates them."""
         # yes=True means we *will* create the file when it is not found
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -213,6 +223,7 @@ class TestCommands(TestCase):
         self.assertTrue(fname.exists())
 
     def test_cmd_generate_all_descriptions(self):
+        """Test the cmd_generate_all_descriptions method with a regex pattern."""
         # Set up a test coder and io
         io = InputOutput(pretty=False, yes=True)
         coder = Coder.create(self.GPT35, None, io)
@@ -229,6 +240,7 @@ class TestCommands(TestCase):
         self.assertEqual(coder.run.call_count, 3)
 
     def test_cmd_add_drop_directory(self):
+        """Test the cmd_add and cmd_drop methods with directories."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=False)
         from aider.coders import Coder
@@ -280,6 +292,7 @@ class TestCommands(TestCase):
         self.assertNotIn(abs_fname, coder.abs_fnames)
 
     def test_cmd_drop_with_glob_patterns(self):
+        """Test the cmd_drop method with glob patterns to ensure correct file removal."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -307,6 +320,7 @@ class TestCommands(TestCase):
         self.assertNotIn(str(Path("test2.py").resolve()), coder.abs_fnames)
 
     def test_cmd_add_bad_encoding(self):
+        """Test the cmd_add method with a file that has a bad encoding."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -323,6 +337,7 @@ class TestCommands(TestCase):
         self.assertEqual(coder.abs_fnames, set())
 
     def test_cmd_git(self):
+        """Test the cmd_git method to ensure it correctly adds and commits files."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
 
@@ -344,6 +359,7 @@ class TestCommands(TestCase):
             self.assertIn("test.txt", files_in_repo)
 
     def test_cmd_tokens(self):
+        """Test the cmd_tokens method to ensure it outputs the correct token information."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
 
@@ -368,6 +384,7 @@ class TestCommands(TestCase):
         self.assertIn("bar.txt", console_output)
 
     def test_cmd_add_from_subdir(self):
+        """Test the cmd_add method from a subdirectory to ensure correct file addition."""
         repo = git.Repo.init()
         repo.config_writer().set_value("user", "name", "Test User").release()
         repo.config_writer().set_value("user", "email", "testuser@example.com").release()
@@ -402,6 +419,7 @@ class TestCommands(TestCase):
         self.assertIn(filenames[2], coder.abs_fnames)
 
     def test_cmd_add_from_subdir_again(self):
+        """Test the cmd_add method from a subdirectory again to ensure correct file addition."""
         with GitTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -421,6 +439,7 @@ class TestCommands(TestCase):
             commands.cmd_add("temp.txt")
 
     def test_cmd_commit(self):
+        """Test the cmd_commit method to ensure it commits changes correctly."""
         with GitTemporaryDirectory():
             fname = "test.txt"
             with open(fname, "w") as f:
@@ -443,6 +462,7 @@ class TestCommands(TestCase):
             self.assertFalse(repo.is_dirty())
 
     def test_cmd_add_from_outside_root(self):
+        """Test the cmd_add method with a file outside the root directory."""
         with ChdirTemporaryDirectory() as tmp_dname:
             root = Path("root")
             root.mkdir()
@@ -464,6 +484,7 @@ class TestCommands(TestCase):
             self.assertEqual(len(coder.abs_fnames), 0)
 
     def test_cmd_add_from_outside_git(self):
+        """Test the cmd_add method with a file outside the git repository."""
         with ChdirTemporaryDirectory() as tmp_dname:
             root = Path("root")
             root.mkdir()
@@ -488,6 +509,7 @@ class TestCommands(TestCase):
             self.assertEqual(len(coder.abs_fnames), 0)
 
     def test_cmd_add_filename_with_special_chars(self):
+        """Test the cmd_add method with a filename containing special characters."""
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -503,6 +525,7 @@ class TestCommands(TestCase):
             self.assertIn(str(fname.resolve()), coder.abs_fnames)
 
     def test_cmd_tokens_output(self):
+        """Test the cmd_tokens method to ensure it outputs repository map and token information."""
         with GitTemporaryDirectory() as repo_dir:
             # Create a small repository with a few files
             (Path(repo_dir) / "file1.txt").write_text("Content of file 1")
@@ -553,6 +576,7 @@ class TestCommands(TestCase):
             self.assertTrue(any("tokens remaining" in line for line in output_lines))
 
     def test_cmd_add_dirname_with_special_chars(self):
+        """Test the cmd_add method with a directory name containing special characters."""
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -571,6 +595,7 @@ class TestCommands(TestCase):
             self.assertIn(str(fname.resolve()), coder.abs_fnames)
 
     def test_cmd_add_dirname_with_special_chars_git(self):
+        """Test the cmd_add method with a directory name containing special characters in a git repository."""
         with GitTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -593,6 +618,7 @@ class TestCommands(TestCase):
             self.assertIn(str(fname.resolve()), coder.abs_fnames)
 
     def test_cmd_add_abs_filename(self):
+        """Test the cmd_add method with an absolute filename."""
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -608,6 +634,7 @@ class TestCommands(TestCase):
             self.assertIn(str(fname.resolve()), coder.abs_fnames)
 
     def test_cmd_add_quoted_filename(self):
+        """Test the cmd_add method with a quoted filename."""
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -623,6 +650,7 @@ class TestCommands(TestCase):
             self.assertIn(str(fname.resolve()), coder.abs_fnames)
 
     def test_cmd_add_existing_with_dirty_repo(self):
+        """Test the cmd_add method with an existing file in a dirty repository."""
         with GitTemporaryDirectory():
             repo = git.Repo()
 
@@ -659,6 +687,7 @@ class TestCommands(TestCase):
             del repo
 
     def test_cmd_read_only_with_glob_pattern(self):
+        """Test the cmd_read_only method with a glob pattern."""
         with GitTemporaryDirectory() as repo_dir:
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -694,6 +723,7 @@ class TestCommands(TestCase):
             )
 
     def test_cmd_read_only_with_recursive_glob(self):
+        """Test the cmd_read_only method with a recursive glob pattern."""
         with GitTemporaryDirectory() as repo_dir:
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -721,6 +751,7 @@ class TestCommands(TestCase):
                 )
 
     def test_cmd_read_only_with_nonexistent_glob(self):
+        """Test the cmd_read_only method with a nonexistent glob pattern."""
         with GitTemporaryDirectory() as repo_dir:
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -739,6 +770,7 @@ class TestCommands(TestCase):
             self.assertEqual(len(coder.abs_read_only_fnames), 0)
 
     def test_cmd_add_unicode_error(self):
+        """Test the cmd_add method with a file that causes a Unicode error."""
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=True)
         from aider.coders import Coder
@@ -756,6 +788,7 @@ class TestCommands(TestCase):
         self.assertEqual(coder.abs_fnames, set())
 
     def test_cmd_add_read_only_file(self):
+        """Test the cmd_add method with a read-only file."""
         with GitTemporaryDirectory():
             # Initialize the Commands and InputOutput objects
             io = InputOutput(pretty=False, yes=True)
@@ -812,6 +845,7 @@ class TestCommands(TestCase):
             )
 
     def test_cmd_test_unbound_local_error(self):
+        """Test the cmd_run method to ensure it handles unbound local errors."""
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             from aider.coders import Coder
@@ -827,6 +861,7 @@ class TestCommands(TestCase):
             self.assertIn("I ran this command", result)
 
     def test_cmd_add_drop_untracked_files(self):
+        """Test the cmd_add and cmd_drop methods with untracked files."""
         with GitTemporaryDirectory():
             repo = git.Repo()
 
@@ -853,6 +888,7 @@ class TestCommands(TestCase):
             self.assertEqual(len(coder.abs_fnames), 0)
 
     def test_cmd_undo_with_dirty_files_not_in_last_commit(self):
+        """Test the cmd_undo method with dirty files not in the last commit."""
         with GitTemporaryDirectory() as repo_dir:
             repo = git.Repo(repo_dir)
             io = InputOutput(pretty=False, yes=True)
@@ -901,6 +937,7 @@ class TestCommands(TestCase):
             del repo
 
     def test_cmd_undo_with_newly_committed_file(self):
+        """Test the cmd_undo method with a newly committed file."""
         with GitTemporaryDirectory() as repo_dir:
             repo = git.Repo(repo_dir)
             io = InputOutput(pretty=False, yes=True)
@@ -937,6 +974,7 @@ class TestCommands(TestCase):
             del repo
 
     def test_cmd_undo_on_first_commit(self):
+        """Test the cmd_undo method on the first commit."""
         with GitTemporaryDirectory() as repo_dir:
             repo = git.Repo(repo_dir)
             io = InputOutput(pretty=False, yes=True)
@@ -966,6 +1004,7 @@ class TestCommands(TestCase):
             del repo
 
     def test_cmd_add_aiderignored_file(self):
+        """Test the cmd_add method with files ignored by .aiderignore."""
         with GitTemporaryDirectory():
             repo = git.Repo()
 
@@ -1006,6 +1045,7 @@ class TestCommands(TestCase):
             self.assertNotIn(fname3, str(coder.abs_fnames))
 
     def test_cmd_read_only(self):
+        """Test the cmd_read_only method to ensure it adds and drops read-only files correctly."""
         with GitTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -1038,6 +1078,7 @@ class TestCommands(TestCase):
             )
 
     def test_cmd_read_only_with_external_file(self):
+        """Test the cmd_read_only method with an external file."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as external_file:
             external_file.write("External file content")
             external_file_path = external_file.name
@@ -1074,6 +1115,7 @@ class TestCommands(TestCase):
             os.unlink(external_file_path)
 
     def test_cmd_read_only_with_multiple_files(self):
+        """Test the cmd_read_only method with multiple files."""
         with GitTemporaryDirectory() as repo_dir:
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -1105,6 +1147,7 @@ class TestCommands(TestCase):
             self.assertEqual(len(coder.abs_read_only_fnames), 0)
 
     def test_cmd_read_only_with_tilde_path(self):
+        """Test the cmd_read_only method with a path containing a tilde."""
         with GitTemporaryDirectory():
             io = InputOutput(pretty=False, yes=False)
             coder = Coder.create(self.GPT35, None, io)
@@ -1139,6 +1182,7 @@ class TestCommands(TestCase):
                 test_file.unlink()
 
     def test_cmd_diff(self):
+        """Test the cmd_diff method to ensure it outputs the correct diff information."""
         with GitTemporaryDirectory() as repo_dir:
             repo = git.Repo(repo_dir)
             io = InputOutput(pretty=False, yes=True)
@@ -1205,6 +1249,7 @@ class TestCommands(TestCase):
                 self.assertIn("+Final modified content", diff_output)
 
     def test_cmd_ask(self):
+        """Test the cmd_ask method to ensure it processes questions correctly."""
         io = InputOutput(pretty=False, yes=True)
         coder = Coder.create(self.GPT35, None, io)
         commands = Commands(io, coder)
@@ -1222,6 +1267,7 @@ class TestCommands(TestCase):
             mock_run.assert_called_once_with(question)
 
     def test_cmd_lint_with_dirty_file(self):
+        """Test the cmd_lint method with a dirty file."""
         with GitTemporaryDirectory() as repo_dir:
             repo = git.Repo(repo_dir)
             io = InputOutput(pretty=False, yes=True)
@@ -1260,6 +1306,7 @@ class TestCommands(TestCase):
             del repo
 
     def test_cmd_reset(self):
+        """Test the cmd_reset method to ensure it resets the chat and file states."""
         with GitTemporaryDirectory() as repo_dir:
             io = InputOutput(pretty=False, yes=True)
             coder = Coder.create(self.GPT35, None, io)
