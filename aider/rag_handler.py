@@ -49,7 +49,6 @@ def _format_docs(docs):
 
 def rag_index_codebase(cache_dir: str, paths: set):
     spinner = Spinner("Indexing RAG vector db")
-    llm = ChatOpenAI(model="gpt-4o-mini")
 
     valid_paths = []
     docs = []
@@ -85,7 +84,7 @@ def rag_index_codebase(cache_dir: str, paths: set):
             path_ids[doc.id] += 1
         doc.id = f"{doc.id}-{str(path_ids[doc.id]).zfill(3)}"
 
-    print(f"Found {len(valid_paths)}/{len(paths)} valid files, split into {len(splits)} chunks")
+    print(f"\nFound {len(valid_paths)}/{len(paths)} valid files, split into {len(splits)} chunks\n")
 
     persistent_client = chromadb.PersistentClient(
         path=cache_dir,
@@ -115,12 +114,12 @@ def rag_index_codebase(cache_dir: str, paths: set):
 
     spinner.step()
     if len(documents_to_update[0]) > 0:
-        print(len(documents_to_update))
+        print(f"\nUpdated {len(documents_to_update)}\n")
         vectorstore.update_documents(documents_to_update[0], documents_to_update[1])
 
     spinner.step()
     if len(documents_to_add) > 0:
-        print(len(documents_to_add))
+        print(f"\nAdded {len(documents_to_add)}\n")
         batch_size = 5000
         batches = [documents_to_add[i:i+batch_size] for i in range(0, len(documents_to_add), batch_size)]
         for batch in batches:

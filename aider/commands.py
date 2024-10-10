@@ -1221,8 +1221,7 @@ class Commands:
             self.io.tool_output("No coder object available.")
             return
         if not args:
-            self.io.tool_output("Please specify a regex for the files to generate docstrings for.")
-            return
+            args = ".*"
 
         try:
             pattern = re.compile(args.strip())
@@ -1231,7 +1230,7 @@ class Commands:
             return
 
         for file_path in self.coder.get_all_abs_files():
-            if pattern.search(file_path):
+            if pattern.match(file_path):
                 self.coder.run(f"/add {file_path}")
                 self.coder.run("Generate the docstrings and descriptions for all functions in this file, and place them in the appropriate places before or after the function headers")
                 self.coder.run(f"/drop")
@@ -1241,8 +1240,7 @@ class Commands:
             self.io.tool_output("No coder object available.")
             return
         if not args:
-            self.io.tool_output("Please specify a regex for the files to index.")
-            return
+            args = ".*"
 
         try:
             pattern = re.compile(args.strip())
@@ -1252,7 +1250,7 @@ class Commands:
         files = set()
         for filename in self.coder.get_all_abs_files():
             file_path = filename
-            if pattern.search(file_path):
+            if pattern.match(file_path):
                 files.add(file_path)
         if not files:
             self.io.tool_output("No files to index.")
