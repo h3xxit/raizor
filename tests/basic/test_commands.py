@@ -212,6 +212,22 @@ class TestCommands(TestCase):
         self.assertEqual(len(coder.abs_fnames), 1)
         self.assertTrue(fname.exists())
 
+    def test_cmd_generate_all_descriptions(self):
+        # Set up a test coder and io
+        io = InputOutput(pretty=False, yes=True)
+        coder = Coder.create(self.GPT35, None, io)
+
+        # Create a test command instance
+        commands = Commands(io, coder)
+
+        # Test with a regex pattern
+        pattern = "test_.*"
+        commands.cmd_generate_all_descriptions(pattern)
+
+        # Verify that the coder's run method was called with the correct arguments
+        # This is a very basic test and may need to be expanded based on the actual implementation of cmd_generate_all_descriptions
+        self.assertEqual(coder.run.call_count, 3)
+
     def test_cmd_add_drop_directory(self):
         # Initialize the Commands and InputOutput objects
         io = InputOutput(pretty=False, yes=False)
