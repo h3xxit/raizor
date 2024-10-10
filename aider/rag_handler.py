@@ -54,9 +54,7 @@ def rag_index_codebase(cache_dir: str, paths: set):
     docs = []
     for path in paths:
         spinner.step()
-        if (os.path.isfile(path) and
-                not any(path.endswith(suffix) for suffix in [".md", ".history", ".txt"]) and
-                not any(".aider" in path for suffix in path.split(os.sep))):
+        if os.path.isfile(path) and not ".aider" in path:
             try:
                 with open(path, 'r', encoding="utf-8") as f:
                     docs.append(Document(
@@ -68,7 +66,7 @@ def rag_index_codebase(cache_dir: str, paths: set):
                         id=path
                     ))
             except UnicodeDecodeError as e:
-                #print(f"Skipping {path}, because of error {e}")
+                print(f"Skipping {path}, because of error {e}")
                 pass
             valid_paths.append(path)
 

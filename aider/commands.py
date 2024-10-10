@@ -1232,7 +1232,8 @@ class Commands:
         for file_path in self.coder.get_all_abs_files():
             if pattern.match(file_path):
                 self.coder.run(f"/add {file_path}")
-                self.coder.run("Generate the docstrings and descriptions for all functions in this file, and place them in the appropriate places before or after the function headers")
+                self.coder.run(f"List all functions in {file_path}.")
+                self.coder.run(f"Generate the docstrings and descriptions for all functions in {file_path}, and place them in the appropriate places before or after the function headers. Do not delete any existing lines of code, and update the docstrings if any exist already.")
                 self.coder.run(f"/drop")
 
     def cmd_index_rag(self, args):
