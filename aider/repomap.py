@@ -80,6 +80,15 @@ class RepoMap:
             )
 
     def token_count(self, text):
+        """
+        Estimate the number of tokens in a given text.
+
+        Args:
+            text (str): The text to estimate token count for.
+
+        Returns:
+            float: Estimated number of tokens in the text.
+        """
         len_text = len(text)
         if len_text < 200:
             return self.main_model.token_count(text)
@@ -94,6 +103,19 @@ class RepoMap:
         return est_tokens
 
     def get_repo_map(
+        """
+        Generate a repository map based on the provided files and parameters.
+
+        Args:
+            chat_files (list): List of files currently in the chat.
+            other_files (list): List of other files in the repository.
+            mentioned_fnames (set, optional): Set of mentioned filenames.
+            mentioned_idents (set, optional): Set of mentioned identifiers.
+            force_refresh (bool, optional): Whether to force refresh the map.
+
+        Returns:
+            str: A string representation of the repository map.
+        """
         self,
         chat_files,
         other_files,
@@ -160,6 +182,15 @@ class RepoMap:
         return repo_content
 
     def get_rel_fname(self, fname):
+        """
+        Get the relative file name with respect to the repository root.
+
+        Args:
+            fname (str): The absolute file name.
+
+        Returns:
+            str: The relative file name.
+        """
         try:
             return os.path.relpath(fname, self.root)
         except ValueError:
@@ -168,6 +199,10 @@ class RepoMap:
             return fname
 
     def load_tags_cache(self):
+        """
+        Load the tags cache from the disk. If the cache cannot be loaded,
+        initializes an empty cache.
+        """
         path = Path(self.root) / self.TAGS_CACHE_DIR
         try:
             self.TAGS_CACHE = Cache(path)
@@ -176,15 +211,37 @@ class RepoMap:
             self.TAGS_CACHE = dict()
 
     def save_tags_cache(self):
+        """
+        Save the current state of the tags cache to the disk.
+        """
         pass
 
     def get_mtime(self, fname):
+        """
+        Get the last modification time of a file.
+
+        Args:
+            fname (str): The file name.
+
+        Returns:
+            float: The last modification time of the file.
+        """
         try:
             return os.path.getmtime(fname)
         except FileNotFoundError:
             self.io.tool_warning(f"File not found error: {fname}")
 
     def get_tags(self, fname, rel_fname):
+        """
+        Retrieve tags for a given file, using the cache if available.
+
+        Args:
+            fname (str): The absolute file name.
+            rel_fname (str): The relative file name.
+
+        Returns:
+            list: A list of tags for the file.
+        """
         # Check if the file is in the cache and if the modification time has not changed
         file_mtime = self.get_mtime(fname)
         if file_mtime is None:
@@ -208,6 +265,16 @@ class RepoMap:
         return data
 
     def get_tags_raw(self, fname, rel_fname):
+        """
+        Extract raw tags from a file using language-specific parsers.
+
+        Args:
+            fname (str): The absolute file name.
+            rel_fname (str): The relative file name.
+
+        Returns:
+            generator: A generator yielding tags for the file.
+        """
         lang = filename_to_lang(fname)
         if not lang:
             return
@@ -242,6 +309,16 @@ class RepoMap:
         self._backfill_references_with_pygments(fname, rel_fname, code)
 
     def _initialize_parser(self, lang, fname):
+        """
+        Initialize the parser for a given language.
+
+        Args:
+            lang (str): The programming language.
+            fname (str): The file name.
+
+        Returns:
+            tuple: A tuple containing the language and parser objects.
+        """
         try:
             language = get_language(lang)
             parser = get_parser(lang)
@@ -251,16 +328,45 @@ class RepoMap:
             return None, None
 
     def _get_query_scm(self, lang):
+        """
+        Get the SCM query for a given language.
+
+        Args:
+            lang (str): The programming language.
+
+        Returns:
+            str or None: The SCM query string if available, otherwise None.
+        """
         query_scm = get_scm_fname(lang)
         if not query_scm.exists():
             return None
         return query_scm.read_text()
 
     def _run_query(self, language, query_scm, tree):
+        """
+        Run a query on a syntax tree to extract captures.
+
+        Args:
+            language: The language object.
+            query_scm (str): The query string.
+            tree: The syntax tree.
+
+        Returns:
+            list: A list of captures from the query.
+        """
         query = language.query(query_scm)
         return list(query.captures(tree.root_node))
 
     def _determine_kind(self, tag):
+        """
+        Determine the kind of a tag (definition or reference).
+
+        Args:
+            tag (str): The tag string.
+
+        Returns:
+            str or None: The kind of the tag ('def' or 'ref'), or None if unknown.
+        """
         if tag.startswith("name.definition."):
             return "def"
         elif tag.startswith("name.reference."):
@@ -268,6 +374,18 @@ class RepoMap:
         return None
 
     def _create_tag(self, rel_fname, fname, node, kind):
+        """
+        Create a Tag object from the given parameters.
+
+        Args:
+            rel_fname (str): The relative file name.
+            fname (str): The absolute file name.
+            node: The syntax node.
+            kind (str): The kind of the tag.
+
+        Returns:
+            Tag: A namedtuple representing the tag.
+        """
         return Tag(
             rel_fname=rel_fname,
             fname=fname,
@@ -277,6 +395,17 @@ class RepoMap:
         )
 
     def _backfill_references_with_pygments(self, fname, rel_fname, code):
+        """
+        Backfill references in a file using Pygments for tokenization.
+
+        Args:
+            fname (str): The absolute file name.
+            rel_fname (str): The relative file name.
+            code (str): The source code of the file.
+
+        Yields:
+            Tag: A namedtuple representing a reference tag.
+        """
         try:
             lexer = guess_lexer_for_filename(fname, code)
         except Exception:
@@ -295,6 +424,19 @@ class RepoMap:
             )
 
     def get_ranked_tags(
+        """
+        Rank tags based on their importance and relationships.
+
+        Args:
+            chat_fnames (list): List of files currently in the chat.
+            other_fnames (list): List of other files in the repository.
+            mentioned_fnames (set): Set of mentioned filenames.
+            mentioned_idents (set): Set of mentioned identifiers.
+            progress (callable, optional): A function to call for progress updates.
+
+        Returns:
+            list: A list of ranked tags.
+        """
         self, chat_fnames, other_fnames, mentioned_fnames, mentioned_idents, progress=None
     ):
         import networkx as nx
@@ -470,6 +612,20 @@ class RepoMap:
         return ranked_tags
 
     def get_ranked_tags_map(
+        """
+        Generate a ranked map of tags for the repository.
+
+        Args:
+            chat_fnames (list): List of files currently in the chat.
+            other_fnames (list, optional): List of other files in the repository.
+            max_map_tokens (int, optional): Maximum number of tokens for the map.
+            mentioned_fnames (set, optional): Set of mentioned filenames.
+            mentioned_idents (set, optional): Set of mentioned identifiers.
+            force_refresh (bool, optional): Whether to force refresh the map.
+
+        Returns:
+            str: A string representation of the ranked tags map.
+        """
         self,
         chat_fnames,
         other_fnames=None,
@@ -523,6 +679,19 @@ class RepoMap:
         return result
 
     def get_ranked_tags_map_uncached(
+        """
+        Generate a ranked map of tags without using the cache.
+
+        Args:
+            chat_fnames (list): List of files currently in the chat.
+            other_fnames (list, optional): List of other files in the repository.
+            max_map_tokens (int, optional): Maximum number of tokens for the map.
+            mentioned_fnames (set, optional): Set of mentioned filenames.
+            mentioned_idents (set, optional): Set of mentioned identifiers.
+
+        Returns:
+            str: A string representation of the ranked tags map.
+        """
         self,
         chat_fnames,
         other_fnames=None,
@@ -600,6 +769,17 @@ class RepoMap:
     tree_cache = dict()
 
     def render_tree(self, abs_fname, rel_fname, lois):
+        """
+        Render a syntax tree for a file with lines of interest highlighted.
+
+        Args:
+            abs_fname (str): The absolute file name.
+            rel_fname (str): The relative file name.
+            lois (list): List of lines of interest.
+
+        Returns:
+            str: A formatted string representing the syntax tree.
+        """
         mtime = self.get_mtime(abs_fname)
         key = (rel_fname, tuple(sorted(lois)), mtime)
 
@@ -638,6 +818,16 @@ class RepoMap:
         return res
 
     def to_tree(self, tags, chat_rel_fnames):
+        """
+        Convert a list of tags into a formatted tree representation.
+
+        Args:
+            tags (list): List of tags to include in the tree.
+            chat_rel_fnames (set): Set of relative file names currently in the chat.
+
+        Returns:
+            str: A string representation of the tree.
+        """
         if not tags:
             return ""
 
@@ -679,6 +869,15 @@ class RepoMap:
 def find_src_files(directory):
     """
     Recursively find all source files in a given directory.
+
+    Args:
+        directory (str): The directory to search for source files.
+
+    Returns:
+        list: A list of file paths for all source files found.
+    """
+    """
+    Recursively find all source files in a given directory.
     
     Args:
         directory (str): The directory to search for source files.
@@ -699,6 +898,12 @@ def find_src_files(directory):
 def get_random_color():
     """
     Generate a random color in hexadecimal format.
+
+    Returns:
+        str: A string representing a random color in the format '#RRGGBB'.
+    """
+    """
+    Generate a random color in hexadecimal format.
     
     Returns:
         str: A string representing a random color in the format '#RRGGBB'.
@@ -710,6 +915,15 @@ def get_random_color():
 
 
 def get_scm_fname(lang):
+    """
+    Get the filename for the SCM query file for a given language.
+
+    Args:
+        lang (str): The programming language.
+
+    Returns:
+        Path or None: The path to the SCM query file if it exists, otherwise None.
+    """
     """
     Get the filename for the SCM query file for a given language.
     
@@ -727,6 +941,12 @@ def get_scm_fname(lang):
 
 
 def get_supported_languages_md():
+    """
+    Generate a markdown table of supported languages and their features.
+
+    Returns:
+        str: A markdown formatted string listing languages, file extensions, and support status.
+    """
     """
     Generate a markdown table of supported languages and their features.
     
