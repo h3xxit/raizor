@@ -465,7 +465,7 @@ class RepoMap:
             if not language or not parser:
                 continue
             code_files.add(fname)
-        rag_index_codebase(self.TAGS_CACHE_DIR, code_files)
+        #rag_index_codebase(self.TAGS_CACHE_DIR, code_files)
         if len(fnames) - len(self.TAGS_CACHE) > 100:
             self.io.tool_output(
                 "Initial repo scan can be slow in larger repos, but only happens once."

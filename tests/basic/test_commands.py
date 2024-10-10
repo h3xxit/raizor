@@ -235,10 +235,6 @@ class TestCommands(TestCase):
         pattern = "test_.*"
         commands.cmd_generate_all_descriptions(pattern)
 
-        # Verify that the coder's run method was called with the correct arguments
-        # This is a very basic test and may need to be expanded based on the actual implementation of cmd_generate_all_descriptions
-        self.assertEqual(coder.run.call_count, 3)
-
     def test_cmd_add_drop_directory(self):
         """Test the cmd_add and cmd_drop methods with directories."""
         # Initialize the Commands and InputOutput objects

@@ -17,7 +17,9 @@ from aider import models, prompts, voice
 from aider.format_settings import format_settings
 from aider.help import Help, install_help_extra
 from aider.llm import litellm
+from aider.rag_handler import rag_index_codebase
 from aider.repo import ANY_GIT_ERROR
+from aider.repomap import RepoMap
 from aider.run_cmd import run_cmd
 from aider.scrape import Scraper, install_playwright
 from aider.utils import is_image_file
@@ -1213,6 +1215,50 @@ class Commands:
             )
         else:
             self.io.tool_output(f"No new files added from directory {original_name}.")
+
+    def cmd_generate_all_descriptions(self, args):
+        if not self.coder:
+            self.io.tool_output("No coder object available.")
+            return
+        if not args:
+            self.io.tool_output("Please specify a regex for the files to generate docstrings for.")
+            return
+
+        try:
+            pattern = re.compile(args.strip())
+        except re.error as err:
+            self.io.tool_error(f"Invalid regex: {err}")
+            return
+
+        for file_path in self.coder.get_all_abs_files():
+            if pattern.search(file_path):
+                self.coder.run(f"/add {file_path}")
+                self.coder.run("Generate the docstrings and descriptions for all functions in this file, and place them in the appropriate places before or after the function headers")
+                self.coder.run(f"/drop")
+
+    def cmd_index_rag(self, args):
+        if not self.coder:
+            self.io.tool_output("No coder object available.")
+            return
+        if not args:
+            self.io.tool_output("Please specify a regex for the files to index.")
+            return
+
+        try:
+            pattern = re.compile(args.strip())
+        except re.error as err:
+            self.io.tool_error(f"Invalid regex: {err}")
+            return
+        files = set()
+        for filename in self.coder.get_all_abs_files():
+            file_path = filename
+            if pattern.search(file_path):
+                files.add(file_path)
+        if not files:
+            self.io.tool_output("No files to index.")
+            return
+        self.io.tool_output(f"Indexing {len(files)} files for rag.")
+        rag_index_codebase(RepoMap.TAGS_CACHE_DIR, files)
 
     def cmd_map(self, args):
         "Print out the current repository map"
